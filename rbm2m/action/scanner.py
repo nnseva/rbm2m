@@ -5,6 +5,7 @@ import os
 
 import task_queue
 import scan_manager
+import record_manager
 import record_importer
 import image_importer
 import exporter
@@ -94,6 +95,8 @@ class Scanner(object):
         scan.finished_at = datetime.datetime.utcnow()
 
         if status == 'success':
+            imp = record_manager.RecordManager(self.session)
+            imp.drop_deprecated_records(scan)
             self.queue.enqueue('export_task')
 
         logger.info("Scan #{} finished with status {}".format(scan_id, status))

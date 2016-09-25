@@ -26,6 +26,21 @@ class BaseManager(object):
         self.session.flush()
         return obj
 
+    def merge_from_dict(self, d):
+        """
+            Create or merge an instance with properties set from _values
+        """
+        obj = self.session.query(self.__model__).get(d['id'])
+        if not obj:
+            obj = self.__model__(**d)
+            self.session.add(obj)
+        else:
+            for k in d:
+                setattr(obj,k,d[k])
+        self.session.merge(obj)
+        self.session.flush()
+        return obj
+
     def all(self):
         """
             Return all entities

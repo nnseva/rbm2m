@@ -67,17 +67,12 @@ class ImageImporter(object):
             Return list of images for rec_id, creating new ones if necessary.
             Do not return existing images with length>0
         """
+        self.image_manager.find(record_id=rec_id).delete()
+        self.session.flush()
         for url in urls:
             fields = {'record_id': rec_id, 'url': url}
-            img = self.image_manager.find(**fields).first()
-
-            if img and img.length:
-                pass
-            elif img:
-                yield img
-            else:
-                fields['is_cover'] = is_cover(rec_id, url)
-                yield self.image_manager.from_dict(fields)
+            fields['is_cover'] = is_cover(rec_id, url)
+            yield self.image_manager.from_dict(fields)
 
     def mark_record(self, rec_id, flag):
         """

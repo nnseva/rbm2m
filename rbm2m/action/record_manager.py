@@ -2,8 +2,12 @@
 from sqlalchemy import or_
 
 from base_manager import BaseManager
-from ..models import Record, RecordFlag
+from ..models import Record, RecordFlag, Image
+import logging
 
+logger = logging.getLogger(__name__)
+
+from rbm2m.util import to_str
 
 class RecordManager(BaseManager):
 
@@ -17,6 +21,13 @@ class RecordManager(BaseManager):
             self.session.query(self.__model__)
                 .filter(self.__model__.id.in_(rec_ids))
                 .all()
+        )
+
+    def has_images(self, rec_id):
+        return bool(
+            self.session.query(Image)
+                .filter(Image.record_id == rec_id)
+                .count()
         )
 
     def list(self, filters=None, search=None, order='id', offset=0):
@@ -54,3 +65,18 @@ class RecordManager(BaseManager):
         flag = rec.flags.filter(RecordFlag.name == flag_name).first()
         if not flag:
             rec.flags.append(RecordFlag(name=flag_name))
+
+    def drop_deprecated_records(self,scan):
+        model = self.__model__
+        records = self.session.query(model).filter(
+            model.genre_id == scan.genre_id,
+            model.import_date < scan.started_at
+        )
+        logger.debug(to_str("Removing deprecated %s records" % records.count()))
+        ids = [r.id for r in records.all()]
+        images = self.session.query(Image).filter(
+            Image.record_id.in_(ids)
+        )
+        logger.debug(to_str("Removing deprecated %s images" % images.count()))
+        images.delete(synchronize_session='fetch')
+        records.delete(synchronize_session='fetch')

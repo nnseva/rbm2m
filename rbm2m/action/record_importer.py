@@ -6,6 +6,7 @@ from scan_manager import ScanManager
 import scraper
 from rbm2m.util import to_str
 
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -76,16 +77,43 @@ class RecordImporter(object):
 
         # find records already present in db
         old_records = self.record_manager.find_existing(record_ids)
-        old_ids = [rec.id for rec in old_records]
 
-        # Add existing records to scan
-        self.scan.records.extend(old_records)
+        # compare present records with just got to reload changed
+        records_dict = {r['id']:r for r in records}
+        not_changed = [rec for rec in old_records if self.compare_records(rec,records_dict[rec.id])]
+        logger.debug(to_str("Not Changed found %s against %s old records") % (len(not_changed),len(old_records)))
+
+        # Add not changed records to scan
+        self.scan.records.extend(not_changed)
+        not_changed_ids = {r.id for r in not_changed}
+        for rec in not_changed:
+            self.update_record_timestamp(rec)
 
         for rec_dict in records:
-            if rec_dict['id'] not in old_ids:
+            if rec_dict['id'] not in not_changed_ids:
                 rec_dict['genre_id'] = self.scan.genre_id
                 rec = self.new_record(rec_dict)
                 self.scan.records.append(rec)
+
+    def compare_records(self, rec, rec_dict):
+        for n in ('artist','title','label','notes','grade','format','price'):
+            if getattr(rec,n,None) != rec_dict.get(n,None):
+                return False
+        if bool(self.record_manager.has_images(rec.id)) != bool(rec_dict['has_images']):
+            return False
+        return True
+
+    def update_record_timestamp(self, rec):
+        """
+            Update existing record timestamp
+        """
+        rec = self.record_manager.merge_from_dict({
+            'id':rec.id,
+            'import_date':datetime.datetime.utcnow()
+        })
+        msg = to_str("Updated record #{}".format(rec.id))
+        logger.debug(msg)
+        return rec
 
     def new_record(self, rec_dict):
         """
@@ -95,7 +123,7 @@ class RecordImporter(object):
         if has_images:
             self._has_images.append(rec_dict['id'])
 
-        rec = self.record_manager.from_dict(rec_dict)
+        rec = self.record_manager.merge_from_dict(rec_dict)
         rec.genre_id = self.scan.genre_id
         msg = to_str("Added record #{}".format(rec.id))
         logger.debug(msg)
@@ -108,6 +136,8 @@ class RecordImporter(object):
         if page_no is None or page_no % 10 == 0:
             self.scan.est_num_records = rec_count
 
+    def drop_deprecated_records(self):
+        self.record_manager.drop_deprecated_records(self.scan)
 
 def uniquify(records):
     """
