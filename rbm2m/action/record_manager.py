@@ -78,5 +78,5 @@ class RecordManager(BaseManager):
             Image.record_id.in_(ids)
         )
         logger.debug(to_str("Removing deprecated %s images" % images.count()))
-        images.delete(synchronize_session='fetch')
-        records.delete(synchronize_session='fetch')
+        #images.delete(synchronize_session='fetch')
+        #records.delete(synchronize_session='fetch')
