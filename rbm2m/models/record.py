@@ -37,7 +37,7 @@ class Record(Base, JsonSerializer):
     label = Column(String(250), nullable=False)
     notes = Column(Text)
     grade = Column(String(16), nullable=False)
-    format = Column(String(2), nullable=False)
+    format = Column(String(4), nullable=False)
     price = Column(Integer)
 
     genre_id = Column(Integer, ForeignKey('genres.id'), nullable=False)
