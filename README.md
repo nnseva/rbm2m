@@ -8,7 +8,7 @@
 * supervisor
 * libmysqlclient-dev or similar
 
-On ubuntu `sudo apt-get install mysql-server redis-server supervisor libmysqlclient-dev`, folowed by `pip install -r requirements/dev.txt` will do
+On ubuntu `sudo apt-get install mysql-server redis-server supervisor libjpeg-dev libmysqlclient-dev`, folowed by `pip install -r requirements/dev.txt` will do
 
 ## Configuration
 
