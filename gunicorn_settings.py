@@ -1,5 +1,5 @@
-workers = 2
+workers = 4
 worker_class = 'gevent'
-timeout = 300
+timeout = 600
 keepalive = 2
 errorlog = '-'

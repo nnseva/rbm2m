@@ -115,6 +115,10 @@ class ScanManager(BaseManager):
         threshold = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         scans = self.session.query(Scan).filter(Scan.started_at < threshold).order_by(Scan.started_at.asc())
         logger.info("Removing deprecated %s scans", scans.count())
-        for s in list(scans):
-            logger.debug("Removing deprecated scan: %s", s)
-            self.session.query(Scan).filter(Scan.id == s.id).delete()
+        for id in [s.id for s in scans]:
+            logger.info("Removing deprecated scan: %s", id)
+            try:
+                self.session.query(Scan).filter(Scan.id == id).delete()
+                self.session.commit()
+            except Exception as ex:
+                logger.exception("Error while removing deprecated scans: %s", ex)
