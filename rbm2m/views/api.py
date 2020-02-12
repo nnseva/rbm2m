@@ -112,3 +112,33 @@ def tidy():
     dumps_glob = "{}/*.html".format(current_app.config['LOGS_DIR'])
     debug.clean_old_dumps(dumps_glob)
     return jsonify({'success': True})
+
+
+@bp.route('/tidy_scans')
+def tidy_scans():
+    """
+        Run daily cleanup
+    """
+    sm = scan_manager.ScanManager(db.session)
+    sm.clean_up_old_scans(max_rows=10)
+    return jsonify({'success': True})
+
+
+@bp.route('/tidy_exports')
+def tidy_exports():
+    """
+        Run daily cleanup
+    """
+    em = export_manager.ExportManager(db.session)
+    em.clean_up_old_exports()
+    return jsonify({'success': True})
+
+
+@bp.route('/tidy_dumps')
+def tidy_dumps():
+    """
+        Run daily cleanup
+    """
+    dumps_glob = "{}/*.html".format(current_app.config['LOGS_DIR'])
+    debug.clean_old_dumps(dumps_glob)
+    return jsonify({'success': True})

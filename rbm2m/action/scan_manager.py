@@ -108,14 +108,14 @@ class ScanManager(BaseManager):
         )
         return q.first()
 
-    def clean_up_old_scans(self):
+    def clean_up_old_scans(self, max_rows=100):
         """
             Delete all scans older than 7 days from now
         """
         threshold = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         scans = self.session.query(Scan).filter(Scan.started_at < threshold).order_by(Scan.started_at.asc())
-        logger.info("Removing deprecated %s scans", scans.count())
-        for id in [s.id for s in scans]:
+        logger.info("Removing deprecated %s scans, max_rows %s", scans.count(), max_rows)
+        for id in [s.id for s in scans[:max_rows]]:
             logger.info("Removing deprecated scan: %s", id)
             try:
                 self.session.query(Scan).filter(Scan.id == id).delete()
