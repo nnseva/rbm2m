@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, current_app, request
 
 from ..webapp import db, redis, basic_auth
 from ..action import (stats, scanner, record_manager, genre_manager, user_settings,
-                      scan_manager, export_manager, debug)
+                      scan_manager, image_manager, export_manager, debug)
 
 bp = Blueprint('api', __name__)
 
@@ -122,6 +122,16 @@ def tidy_scans():
     sm = scan_manager.ScanManager(db.session)
     sm.clean_up_old_scans(max_rows=10)
     return jsonify({'success': True})
+
+
+@bp.route('/tidy_images')
+def tidy_images():
+    """
+        Run daily cleanup
+    """
+    im = image_manager.ImageManager(db.session)
+    cleaned = im.clean_up_old_images(current_app.config['MEDIA_DIR'], max_dirs=5)
+    return jsonify({'success': True, 'cleaned': cleaned})
 
 
 @bp.route('/tidy_exports')
